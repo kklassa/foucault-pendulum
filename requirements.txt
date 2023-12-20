@@ -1,5 +1,8 @@
+clipboard==0.0.4
 black==23.12.0
+folium==0.15.1
 numpy==1.26.2
 matplotlib==3.8.2
 streamlit==1.29.0
+streamlit-folium==0.17.4
 watchdog==3.0.0

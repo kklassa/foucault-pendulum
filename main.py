@@ -1,11 +1,18 @@
+import ast
+from functools import partial
+
+import clipboard
+import folium
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import streamlit as st
 import streamlit.components.v1 as components
+from streamlit_folium import folium_static
+
 from compute_trajectory import compute_trajectory
-from functools import partial
+
 
 matplotlib.rcParams["animation.embed_limit"] = 2**30
 
@@ -48,6 +55,8 @@ if "planet" not in st.session_state:
     st.session_state["length"] = None
     st.session_state["framerate"] = None
     st.session_state["simulation_length"] = None
+    st.session_state["lat"] = None
+    st.session_state["location"] = [52.237, 21.017]
 
 st.sidebar.title("Configure Simulation")
 
@@ -55,7 +64,7 @@ with st.sidebar:
     planet = st.selectbox(
         "Choose a Planet",
         list(planets.keys()),
-        index=None,
+        index=2,
         placeholder="Choose a planet",
     )
 
@@ -85,16 +94,39 @@ with st.sidebar:
     if omega is not None:
         st.text(f"Chosen Rotational Velocity: {omega}rad/s")
 
-    lat = st.slider("Pick Latitude", min_value=-89.9, max_value=89.9, format="%.2f")
-    st.session_state["lat"] = lat
+    if planet == "Earth":
+        m = folium.Map(
+            location=st.session_state["location"],
+            zoom_start=5,
+            tiles="cartodb positron",
+        )
+        folium.ClickForMarker().add_to(m)
+        folium.ClickForLatLng(
+            format_str='"[" + lat + "," + lng + "]"', alert=False
+        ).add_to(m)
+        folium_static(m)
+        if st.button("Use Selected Location"):
+            location = ast.literal_eval(clipboard.paste())
+            st.session_state["location"] = location
+            lat, _ = location
+            st.session_state["lat"] = lat
+            st.rerun()
+        if st.session_state['lat']:
+            st.text(f"Chosen Latitude: {st.session_state['lat']}")
+    else:
+        lat = st.slider("Pick Latitude", min_value=-89.9, max_value=89.9, format="%.2f")
+        st.session_state["lat"] = lat
+
     length = st.number_input(
         "Enter Pendulum Length [m]", value=67.0, format="%.2f", min_value=0.0
     )
     st.session_state["length"] = length
+
     framerate = st.number_input(
         "Enter Simulation Framerate", value=30, max_value=60, min_value=1, format="%d"
     )
     st.session_state["framerate"] = framerate
+
     simulation_length = st.number_input(
         "Enter Simulation Length", value=200, max_value=600, min_value=1, format="%d"
     )
@@ -111,6 +143,7 @@ if start:
     omega = st.session_state["omega"]
     lat = st.session_state["lat"]
     length = st.session_state["length"]
+    lat = st.session_state["lat"]
     if None not in (g, omega, lat, length):
         ani = FuncAnimation(
             fig,

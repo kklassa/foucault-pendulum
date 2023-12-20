@@ -1,3 +1,5 @@
+black==23.12.0
 numpy==1.26.2
 matplotlib==3.8.2
 streamlit==1.29.0
+watchdog==3.0.0

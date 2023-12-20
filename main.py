@@ -43,20 +43,29 @@ else:
     g, omega = None, None
 
 if planet == "Custom":
-    g = st.number_input("Enter g", value=None)
-    omega = st.number_input("Enter omega [10^-4 rad/s]", value=None, format="%.8f") * 1e-4
+    g = st.number_input("Enter g:", value=None)
 
-if None not in (g, omega) and planet != "Custom":
+if g is not None:
     st.text(f"Chosen g: {g}m/s^2")
+
+if planet == "Custom":
+    omega = st.number_input("Enter omega [10^-4 rad/s]:", value=None, format="%.8f")
+    if omega is not None:
+        omega *= 1e-4
+
+if omega is not None:
     st.text(f"Chosen rotational velocity: {omega}rad/s")
 
-lat = st.slider("Enter latitude", min_value=-89.9, max_value=89.9, format="%.2f")
+lat = st.slider("Pick latitude", min_value=-89.9, max_value=89.9, format="%.2f")
 length = st.number_input("Enter length [m]", value=None, format="%.7f")
 framerate = st.number_input("Enter framerate", value=30, max_value=60, min_value=1, format="%d")
 
 T = np.arange(0, 200, 10 / framerate)
-
-if None not in (g, omega, lat, length):
-    ani = FuncAnimation(fig, partial(animate, lat=lat, length=length, T=T, g=g, omega=omega), frames=len(T), blit=True, interval=1000/framerate)
-    st.title("Foucault Pendulum Path")
-    components.html(ani.to_jshtml(), height=1000, width=1000)
+start = st.button("Start animation")
+if start:
+    if None not in (g, omega, lat, length):
+        ani = FuncAnimation(fig, partial(animate, lat=lat, length=length, T=T, g=g, omega=omega), frames=len(T), blit=True, interval=1000/framerate)
+        st.title("Foucault Pendulum Path")
+        components.html(ani.to_jshtml(), height=600, width=600)
+    else:
+        st.error("Please fill in all fields")

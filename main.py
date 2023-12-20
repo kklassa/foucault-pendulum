@@ -44,7 +44,7 @@ else:
 
 if planet == "Custom":
     g = st.number_input("Enter g", value=None)
-    omega = st.number_input("Enter omega", value=None, format="%.8f")
+    omega = st.number_input("Enter omega [10^-4 rad/s]", value=None, format="%.8f") * 1e-4
 
 if None not in (g, omega) and planet != "Custom":
     st.text(f"Chosen g: {g}m/s^2")

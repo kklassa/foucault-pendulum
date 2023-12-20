@@ -1,41 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-
-
-def compute_trajectory(
-        lat: float, 
-        length: float,
-        t: int,
-        time_frames: np.ndarray,
-        g: float = 3.7,
-        omega: float = 7.088e-5 * 10 ** 3, 
-    ) -> (float, float):
-    """
-    Computes the trajectory of the Foucault pendulum.
-
-    :param lamda: Latitude where the pendulum is located.
-    :param length: Length of the pendulum.
-    :param t: Index of the current point in time.
-    :param T: Array of time points at which to compute the pendulum's position.
-    :param g: Acceleration due to gravity.
-    :param omega: Angular velocity of the planet's rotation. (7.2921e-5)
-    :return: Arrays of x and y coordinates of the pendulum's position until the current point in time.
-    """
-    # Frequency of the pendulum's oscillation
-    freq = np.sqrt(g / length)
-
-    # Compute x and y coordinates
-    x = (
-        np.cos(freq * time_frames[:t] - omega * np.sin(lat) * time_frames[:t]) +
-        np.cos(freq * time_frames[:t] + omega * np.sin(lat) * time_frames[:t])
-    )
-    y = (
-        np.sin(freq * time_frames[:t] - omega * np.sin(lat) * time_frames[:t]) -
-        np.sin(freq * time_frames[:t] + omega * np.sin(lat) * time_frames[:t])
-    )
-
-    return x, y
+import streamlit as st
+import streamlit.components.v1 as components
+from compute_trajectory import compute_trajectory
+from functools import partial
 
 fig, ax = plt.subplots()
 plt.title('Foucault Pendulum Path')
@@ -46,20 +15,47 @@ ax.set_ylim(-3, 3)
 ax.set_aspect('equal', 'box')
 line, = ax.plot([], [], lw=2)
 
-lat = 0.9 * np.pi
-length = 150
-
 g_earth = 9.81
 g_mars = 3.7
-omega_earth = 7.2921e-5
 omega_mars = 7.088e-5
 
 T = np.arange(0, 200, 0.5)
 
-def animate(t):
-    x, y = compute_trajectory(lat, length, t, T)
+def animate(t, lat, length, g, omega):
+    x, y = compute_trajectory(lat, length, t, T, g, omega)
     line.set_data(x, y)
     return line,
 
-ani = FuncAnimation(fig, animate, frames=len(T), blit=True, interval=50)
-plt.show()
+planets = {
+    "Mercury": (3.7, 1.24e-6),
+    "Venus": (8.87, -2.992e-7),
+    "Earth": (9.81, 7.292e-5),
+    "Mars": (3.71, 7.088e-5),
+    "Jupiter": (24.79, 1.758e-4),
+    "Saturn": (10.44, 1.653e-4),
+    "Uranus": (8.87, -1.012e-4),
+    "Neptune": (11.15, 1.083e-4),
+    "Custom": (None, None),
+}
+planet = st.selectbox("Choose a planet", list(planets.keys()), index=None, placeholder="Choose a planet")
+
+if planet is not None:
+    g, omega = planets[planet]
+else:
+    g, omega = None, None
+
+if planet == "Custom":
+    g = st.number_input("Enter g", value=None)
+    omega = st.number_input("Enter omega", value=None, format="%.8f")
+
+if None not in (g, omega):
+    st.text(f"Chosen g: {g}m/s^2")
+    st.text(f"Chosen rotational velocity: {omega}rad/s")
+
+lat = st.number_input("Enter latitude", value=None, format="%.7f")
+length = st.number_input("Enter length", value=None, format="%.7f")
+
+if None not in (g, omega, lat, length):
+    ani = FuncAnimation(fig, partial(animate, lat=lat, length=length, g=g, omega=omega), frames=len(T), blit=True, interval=50)
+    st.title("Foucault Pendulum Path")
+    components.html(ani.to_jshtml(), height=1000, width=1000)

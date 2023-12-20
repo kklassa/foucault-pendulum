@@ -21,6 +21,7 @@ line, = ax.plot([], [], lw=2)
 def animate(t, lat, length, T, g, omega):
     x, y = compute_trajectory(lat, length, t, T, g, omega)
     line.set_data(x, y)
+    line.set_color('#FF4B4B')
     return line,
 
 planets = {
@@ -35,37 +36,72 @@ planets = {
     "Custom": (None, None),
 }
 
-planet = st.selectbox("Choose a planet", list(planets.keys()), index=None, placeholder="Choose a planet")
+st.set_page_config(page_title="Focault Pendulum Path Simulation", page_icon=":cyclone:")
 
-if planet is not None:
-    g, omega = planets[planet]
-else:
-    g, omega = None, None
+if 'planet' not in st.session_state:
+    st.session_state["planet"] = None
+    st.session_state["g"] = None
+    st.session_state["omega"] = None
+    st.session_state["lat"] = None
+    st.session_state["length"] = None
+    st.session_state["framerate"] = None
+    st.session_state["simulation_length"] = None
 
-if planet == "Custom":
-    g = st.number_input("Enter g:", value=None)
+st.sidebar.title("Configure Simulation")
 
-if g is not None:
-    st.text(f"Chosen g: {g}m/s^2")
+with st.sidebar:
+    planet = st.selectbox("Choose a Planet", list(planets.keys()), index=None, placeholder="Choose a planet")
 
-if planet == "Custom":
-    omega = st.number_input("Enter omega [10^-4 rad/s]:", value=None, format="%.8f")
+    if planet is not None:
+        g, omega = planets[planet]
+        st.session_state["planet"] = planet
+        st.session_state["g"] = g
+        st.session_state["omega"] = omega
+    else:
+        g, omega = None, None
+        st.session_state["planet"] = None
+        st.session_state["g"] = None
+        st.session_state["omega"] = None
+
+    if planet == "Custom":
+        g = st.number_input("Enter g:", value=None)
+        st.session_state["g"] = g
+
+    if g is not None:
+        st.text(f"Chosen Gravitational Acceleration: {g}m/s^2")
+
+    if planet == "Custom":
+        omega = st.number_input("Enter Omega [10^-4 rad/s]:", value=None, format="%.8f")
+        if omega is not None:
+            omega *= 1e-4
+
     if omega is not None:
-        omega *= 1e-4
+        st.text(f"Chosen Rotational Velocity: {omega}rad/s")
 
-if omega is not None:
-    st.text(f"Chosen rotational velocity: {omega}rad/s")
+    lat = st.slider("Pick Latitude", min_value=-89.9, max_value=89.9, format="%.2f")
+    st.session_state["lat"] = lat
+    length = st.number_input("Enter Pendulum Length [m]", value=67.0, format="%.2f", min_value=0.0)
+    st.session_state["length"] = length
+    framerate = st.number_input("Enter Simulation Framerate", value=30, max_value=60, min_value=1, format="%d")
+    st.session_state["framerate"] = framerate
+    simulation_length = st.number_input("Enter Simulation Length", value=200, max_value=600, min_value=1, format="%d")
+    st.session_state["simulation_length"] = simulation_length
 
-lat = st.slider("Pick latitude", min_value=-89.9, max_value=89.9, format="%.2f")
-length = st.number_input("Enter length [m]", value=None, format="%.7f")
-framerate = st.number_input("Enter framerate", value=30, max_value=60, min_value=1, format="%d")
+    start = st.button("Start Animation")
 
-T = np.arange(0, 200, 10 / framerate)
-start = st.button("Start animation")
+st.title("Foucault Pendulum Path Simulation")
 if start:
+    simulation_length = st.session_state["simulation_length"]
+    framerate = st.session_state["framerate"]
+    T = np.arange(0, simulation_length, 10 / framerate)
+    g = st.session_state["g"]
+    omega = st.session_state["omega"]
+    lat = st.session_state["lat"]
+    length = st.session_state["length"]
     if None not in (g, omega, lat, length):
         ani = FuncAnimation(fig, partial(animate, lat=lat, length=length, T=T, g=g, omega=omega), frames=len(T), blit=True, interval=1000/framerate)
-        st.title("Foucault Pendulum Path")
-        components.html(ani.to_jshtml(), height=600, width=600)
+        with st.spinner("Rendering the Animation..."):
+            rendered_ani = ani.to_jshtml()
+        components.html(rendered_ani, height=600, width=600)
     else:
         st.error("Please fill in all fields")

@@ -2,7 +2,7 @@ import numpy as np
 
 
 def compute_trajectory(
-        lat: float,
+        lat_degrees: float,
         length: float,
         t: int,
         time_frames: np.ndarray,
@@ -23,6 +23,7 @@ def compute_trajectory(
     # Frequency of the pendulum's oscillation
     freq = np.sqrt(g / length)
 
+    lat = lat_degrees * np.pi / 180
     omega = omega * 10 ** 3
 
     # Compute x and y coordinates

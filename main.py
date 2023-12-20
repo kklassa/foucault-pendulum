@@ -7,22 +7,24 @@ import streamlit.components.v1 as components
 from compute_trajectory import compute_trajectory
 from functools import partial
 
-matplotlib.rcParams['animation.embed_limit'] = 2 ** 30
+matplotlib.rcParams["animation.embed_limit"] = 2**30
 
 fig, ax = plt.subplots()
-plt.title('Foucault Pendulum Path')
-plt.xlabel('x position')
-plt.ylabel('y position')
+plt.title("Foucault Pendulum Path")
+plt.xlabel("x position")
+plt.ylabel("y position")
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
-ax.set_aspect('equal', 'box')
-line, = ax.plot([], [], lw=2)
+ax.set_aspect("equal", "box")
+(line,) = ax.plot([], [], lw=2)
+
 
 def animate(t, lat, length, T, g, omega):
     x, y = compute_trajectory(lat, length, t, T, g, omega)
     line.set_data(x, y)
-    line.set_color('#FF4B4B')
-    return line,
+    line.set_color("#FF4B4B")
+    return (line,)
+
 
 planets = {
     "Mercury": (3.7, 1.24e-6),
@@ -36,9 +38,9 @@ planets = {
     "Custom": (None, None),
 }
 
-st.set_page_config(page_title="Focault Pendulum Path Simulation", page_icon=":cyclone:")
+st.set_page_config(page_title="Focault Pendulum", page_icon=":cyclone:")
 
-if 'planet' not in st.session_state:
+if "planet" not in st.session_state:
     st.session_state["planet"] = None
     st.session_state["g"] = None
     st.session_state["omega"] = None
@@ -50,7 +52,12 @@ if 'planet' not in st.session_state:
 st.sidebar.title("Configure Simulation")
 
 with st.sidebar:
-    planet = st.selectbox("Choose a Planet", list(planets.keys()), index=None, placeholder="Choose a planet")
+    planet = st.selectbox(
+        "Choose a Planet",
+        list(planets.keys()),
+        index=None,
+        placeholder="Choose a planet",
+    )
 
     if planet is not None:
         g, omega = planets[planet]
@@ -80,11 +87,17 @@ with st.sidebar:
 
     lat = st.slider("Pick Latitude", min_value=-89.9, max_value=89.9, format="%.2f")
     st.session_state["lat"] = lat
-    length = st.number_input("Enter Pendulum Length [m]", value=67.0, format="%.2f", min_value=0.0)
+    length = st.number_input(
+        "Enter Pendulum Length [m]", value=67.0, format="%.2f", min_value=0.0
+    )
     st.session_state["length"] = length
-    framerate = st.number_input("Enter Simulation Framerate", value=30, max_value=60, min_value=1, format="%d")
+    framerate = st.number_input(
+        "Enter Simulation Framerate", value=30, max_value=60, min_value=1, format="%d"
+    )
     st.session_state["framerate"] = framerate
-    simulation_length = st.number_input("Enter Simulation Length", value=200, max_value=600, min_value=1, format="%d")
+    simulation_length = st.number_input(
+        "Enter Simulation Length", value=200, max_value=600, min_value=1, format="%d"
+    )
     st.session_state["simulation_length"] = simulation_length
 
     start = st.button("Start Animation")
@@ -99,7 +112,13 @@ if start:
     lat = st.session_state["lat"]
     length = st.session_state["length"]
     if None not in (g, omega, lat, length):
-        ani = FuncAnimation(fig, partial(animate, lat=lat, length=length, T=T, g=g, omega=omega), frames=len(T), blit=True, interval=1000/framerate)
+        ani = FuncAnimation(
+            fig,
+            partial(animate, lat=lat, length=length, T=T, g=g, omega=omega),
+            frames=len(T),
+            blit=True,
+            interval=1000 / framerate,
+        )
         with st.spinner("Rendering the Animation..."):
             rendered_ani = ani.to_jshtml()
         components.html(rendered_ani, height=600, width=600)

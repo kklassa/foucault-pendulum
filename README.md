@@ -25,4 +25,4 @@ Finally, run the project:
 streamlit run main.py
 ```
 
-The app will be accessible in the browers under the URL displayed in the terminal.
+The app will be accessible in the browser under the URL displayed in the terminal.

@@ -90,6 +90,7 @@ with st.sidebar:
         omega = st.number_input("Enter Omega [10^-4 rad/s]:", value=None, format="%.8f")
         if omega is not None:
             omega *= 1e-4
+        st.session_state["omega"] = omega
 
     if omega is not None:
         st.text(f"Chosen Rotational Velocity: {omega}rad/s")
@@ -143,7 +144,6 @@ if start:
     omega = st.session_state["omega"]
     lat = st.session_state["lat"]
     length = st.session_state["length"]
-    lat = st.session_state["lat"]
     if None not in (g, omega, lat, length):
         ani = FuncAnimation(
             fig,
